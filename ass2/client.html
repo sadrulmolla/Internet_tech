@@ -5,6 +5,38 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<style>
 		@import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400);
+		body
+		{
+			background-image: url(back.jpg);
+		}
+		.card-footer
+		{
+			border-radius: 0 0 15px 15px !important;
+			border-top: 0 !important;
+		}
+		#puttext{
+			border-radius: 100px 0px 0px 100px;
+			height: 30px !important;
+			width: 400px;
+			background-color: blue solid;
+		}
+		#fileinput
+		{
+			overflow:hidden;
+			height: 0;
+			width: 0;
+			border-top-width: 0px;
+		}
+		#textButton {
+			height: 35px;
+			width: 60px;
+		}
+		#addImage
+		{
+			border-radius: 0px 100px 100px 0px;
+			height: 35px;
+			width: 120px;
+		}
 		#container {
 	    	width: 400px;
 	    	padding: 10px;
@@ -100,10 +132,12 @@
 	</style>
 </head>
 <body>
-	<input type="text" onkeydown="enterKeyPressed(event)" placeholder="Enter Your message here" id="puttext">
-	<button id="textButton">SEND</button>
-	<input type="file" id="fileinput" style="height:0;overflow:hidden;"><br><br>
-	<button id="addImage">Upload image</button>
+	<div class="card-footer">
+		<input type="text" onkeydown="enterKeyPressed(event)" placeholder="Type your message..." id="puttext">
+		<button id="textButton">SEND</button>
+		<button id="addImage">Upload image</button>
+		<input type="file" id="fileinput"><br><br>
+	</div>
 	<div id="container"></div>
 </body>
 </html>
@@ -171,6 +205,10 @@
 			}
 			$("#log").append("<br>");
 		}
+		else if(json.type=="message")
+		{
+			log.innerHTML += '<p style="text-align: center;">'+json.data+'</p>';
+		}
 		else
 		{
 			bl=json.data;
@@ -200,6 +238,7 @@
 			type: "text",
 			data: newText,
 		}));
+		document.getElementById('puttext').value = '';
 	}
 	$(document).ready(function(){
 		$("#addImage").click(function()
