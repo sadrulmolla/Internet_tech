@@ -31,7 +31,7 @@ s.on('connection', function(ws)
 				console.log(ws.username+" joined the chat");
 			}
 		}
-		if(message.type=="text" || message.type=="binary")
+		if(message.type=="text" || message.type=="binary" || message.type=="user")
 		{
 			s.clients.forEach(function(client){
 				client.send(JSON.stringify({

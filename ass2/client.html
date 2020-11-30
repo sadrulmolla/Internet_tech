@@ -1,151 +1,232 @@
 <!DOCTYPE html>
-	<html>
-		<head>
-			<title>Chat application</title>
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-			<style>
-				body{
-					background: #F0FFFF
-				}
-				input[type=text]{
-					width: 20%;
-					padding: 10px 10px;
-					border: 4px 20px;
-					border-radius: 4px;
-				}
-				button{
-					width: 10%;
-					padding: 10px 10px;
-					border-radius: 4px;
-				}
-			</style>
-		</head>
-		<body>
-			<input type="text" onkeydown="enterKeyPressed(event)" placeholder="Enter Your message here" id="puttext">
-			<button id="textButton">SEND</button>
-			<input type="file" id="fileinput" style="height:0;overflow:hidden;"><br><br>
-			<button id="addImage">Upload image</button>
-			<div id="log"></div>
-		</body>
-	</html>
-	<script type="text/javascript">
-		var username = prompt("Please enter your Username");
-		var sock = new WebSocket("ws://localhost:8080");
-		var log = document.getElementById('log');
-		function enterKeyPressed(evt) {
-			evt = evt || window.event;
-			if (evt.keyCode == 13) {
-				document.getElementById('puttext').value += '/';
+<html>
+<head>
+	<title></title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<style>
+		@import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400);
+		#container {
+	    	width: 400px;
+	    	padding: 10px;
+		}
+		.message-blue {
+		    position: relative;
+		    margin-left: 20px;
+		    margin-bottom: 10px;
+		    padding: 10px;
+		    background-color: #A8DDFD;
+		    width: 200px;
+		    height: auto;
+		    text-align: left;
+		    font: 400 .9em 'Open Sans', sans-serif;
+		    border: 1px solid #97C6E3;
+		    border-radius: 10px;
+		}
+		.message-orange {
+		    position: relative;
+		    margin-bottom: 10px;
+		    margin-left: calc(100% - 240px);
+		    padding: 10px;
+		    background-color: #f8e896;
+		    width: 200px;
+		    height: auto;
+		    text-align: left;
+		    font: 400 .9em 'Open Sans', sans-serif;
+		    border: 1px solid #dfd087;
+		    border-radius: 10px;
+		}
+		.message-content {
+		    padding: 0;
+		    margin: 0;
+		}
+		.message-timestamp-right {
+		    position: absolute;
+		    font-size: .85em;
+		    font-weight: 300;
+		    bottom: 5px;
+		    right: 5px;
+		}
+		.message-timestamp-left {
+		    position: absolute;
+		    font-size: .85em;
+		    font-weight: 300;
+		    bottom: 5px;
+		    left: 5px;
+		}
+		.message-blue:after {
+		    content: '';
+		    position: absolute;
+		    width: 0;
+		    height: 0;
+		    border-top: 15px solid #A8DDFD;
+		    border-left: 15px solid transparent;
+		    border-right: 15px solid transparent;
+		    top: 0;
+		    left: -15px;
+		}
+		.message-blue:before {
+		    content: '';
+		    position: absolute;
+		    width: 0;
+		    height: 0;
+		    border-top: 17px solid #97C6E3;
+		    border-left: 16px solid transparent;
+		    border-right: 16px solid transparent;
+		    top: -1px;
+		    left: -17px;
+		}
+		.message-orange:after {
+		    content: '';
+		    position: absolute;
+		    width: 0;
+		    height: 0;
+		    border-bottom: 15px solid #f8e896;
+		    border-left: 15px solid transparent;
+		    border-right: 15px solid transparent;
+		    bottom: 0;
+		    right: -15px;
+		}
+		.message-orange:before {
+		    content: '';
+		    position: absolute;
+		    width: 0;
+		    height: 0;
+		    border-bottom: 17px solid #dfd087;
+		    border-left: 16px solid transparent;
+		    border-right: 16px solid transparent;
+		    bottom: -1px;
+		    right: -17px;
+		}
+	</style>
+</head>
+<body>
+	<input type="text" onkeydown="enterKeyPressed(event)" placeholder="Enter Your message here" id="puttext">
+	<button id="textButton">SEND</button>
+	<input type="file" id="fileinput" style="height:0;overflow:hidden;"><br><br>
+	<button id="addImage">Upload image</button>
+	<div id="container"></div>
+</body>
+</html>
+<script type="text/javascript">
+	var username = prompt("Please enter your Username");
+	var sock = new WebSocket("ws://localhost:8080");
+	var log = document.getElementById('container');
+	var n=username.length;
+	var bl=username;
+	function enterKeyPressed(evt)
+	{
+		evt = evt || window.event;
+		if (evt.keyCode == 13)
+		{
+			document.getElementById('puttext').value += '/';
+		}
+	}
+	sock.onopen = function()
+	{
+		sock.send(JSON.stringify({
+			type: "username",
+			data: username
+		}));
+	}
+	sock.onmessage = function()
+	{
+		$("#container").append("<br>");
+		var json = JSON.parse(event.data);
+		if(json.type == "errormsg" && json.data == "DUPLICATE-CLIENT")
+		{
+			alert(username+" is already Taken! Please try another name");
+			return;
+		}
+		else if(json.type == "username")
+		{
+			if(json.data != username)
+			{
+				log.innerHTML += '<p style="text-align: center;">'+json.data+" joined the chat</p>";
 			}
 		}
-		sock.onopen = function()
+		else if(json.type =="text")
 		{
-			sock.send(JSON.stringify({
-				type: "username",
-				data: username
-			}));
-		}
-		sock.onmessage = function()
-		{
-			log.innerHTML+="<br>";
-			var json = JSON.parse(event.data);
-			if(json.type == "errormsg" && json.data == "DUPLICATE-CLIENT")
+			var str=json.data.substring(3,n+3);
+			var m=json.data.length;
+			console.log(str);
+			if(str!= username)
 			{
-				alert(username+" is already Taken! Please try another name");
-				return;
-			}
-			if(json.type == "username")
-			{
-				if(json.data != username)
-				{
-					log.innerHTML += json.data+" joined the chat<br>";
-				}
-			}
-			else if(json.type =="text")
-			{
-				log.innerHTML += json.data+"<br>";
+				log.innerHTML += '<div class="message-blue"><p class="message-content">'+json.data+"</p></div>";
 			}
 			else
 			{
-				var img=json.data;
-				$("#log").append(img);
-				$("#log").append("<br>");
+				log.innerHTML += '<div class="message-orange"><p class="message-content">'+'<b>You'+json.data.substring(n+3,m)+"</p></div>";
 			}
 		}
-		document.getElementById("textButton").onclick=function()
+		else if(json.type=="binary")
 		{
-			var Text = document.getElementById('puttext').value;
-			if(Text=="")
+			var img=json.data;
+			if(bl!=username)
 			{
-				alert("Please Enter The Text :)");
-				return;
+				log.innerHTML += '<div class="message-blue"><b>'+bl+':</b><br>'+json.data+"</div>";
 			}
-			var newText = username+": ";
-			for(var i=0;i<Text.length;i++) {
-				if(Text.charAt(i) == '/') {
-					newText += '<br>';
-				} else {
-					newText += Text.charAt(i);
-				}
+			else
+			{
+				log.innerHTML += '<div class="message-orange"><b>You:</b><br>'+json.data+"</div>";
 			}
-			sock.send(JSON.stringify({
-				type: "text",
-				data: newText,
-			}));
+			$("#log").append("<br>");
 		}
-		/*function ArrayBufferToBinary(buffer)
+		else
 		{
-			var uint8 = new Uint8Array(buffer);
-			return uint8.reduce((binary, uint8) => binary + uint8.toString(2), "");
+			bl=json.data;
 		}
-		function ReadFile()
+	}
+	document.getElementById("textButton").onclick=function()
+	{
+		var Text = document.getElementById('puttext').value;
+		if(Text=="")
 		{
-			var input = document.getElementsByTagName("input")[1];
-			if(input.files.length === 0)
+			alert("Please Enter The Text :)");
+			return;
+		}
+		var newText = "<b>"+username+':</b><br>';
+		for(var i=0;i<Text.length;i++)
+		{
+			if(Text.charAt(i) == '/')
 			{
-				window.setTimeout(ReadFile, 1000);
-				return;
+				newText += '<br>';
 			}
-			var fr = new FileReader();
-			fr.onload = function()
+			else
 			{
-				var data = fr.result;
-				var array = ArrayBufferToBinary(data);
-				sock.send(JSON.stringify({
-				type: "binary",
-				data: array,
-			}));
-			};
-			fr.readAsArrayBuffer(input.files[0]);
-		}*/
-		$(document).ready(function()
+				newText += Text.charAt(i);
+			}
+		}
+		sock.send(JSON.stringify({
+			type: "text",
+			data: newText,
+		}));
+	}
+	$(document).ready(function(){
+		$("#addImage").click(function()
 		{
-			$("#addImage").click(function()
+			$("#fileinput").click();
+		});
+		$("#fileinput").change(function()
+		{
+			if (this.files && this.files[0])
 			{
-				$("#fileinput").click();
-			});
-			$("#fileinput").change(function()
-			{
-				if (this.files && this.files[0])
-				{
-					var reader = new FileReader();
-					reader.onload = imageIsLoaded;
-					reader.readAsDataURL(this.files[0]);
-				}
-			});
-			function imageIsLoaded(e)
-			{
-				var x = 'foo';
-				var picture = '<img src="' + e.target.result + '" style="width:200px;height:200px;" class="' + x + 'thImage">'
-				sock.send(JSON.stringify({
-				type: "text",
-				data: username+ ':',
-				}));
-				sock.send(JSON.stringify({
-				type: "binary",
-				data: picture,
-				}));
+				var reader = new FileReader();
+				reader.onload = imageIsLoaded;
+				reader.readAsDataURL(this.files[0]);
 			}
 		});
-
-	</script>
+		function imageIsLoaded(e)
+		{
+			var x = 'foo';
+			var picture = '<img src="' + e.target.result + '" style="width:200px;height:200px;" class="' + x + 'thImage">'
+			sock.send(JSON.stringify({
+				type: "user",
+				data: username,
+			}));
+			sock.send(JSON.stringify({
+				type: "binary",
+				data: picture,
+			}));
+		}
+	});
+</script>
