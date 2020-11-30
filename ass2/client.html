@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+	<html>
+		<head>
+			<title>Chat application</title>
+			<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+			<style>
+				body{
+					background: #F0FFFF
+				}
+				input[type=text]{
+					width: 20%;
+					padding: 10px 10px;
+					border: 4px 20px;
+					border-radius: 4px;
+				}
+				button{
+					width: 10%;
+					padding: 10px 10px;
+					border-radius: 4px;
+				}
+			</style>
+		</head>
+		<body>
+			<input type="text" onkeydown="enterKeyPressed(event)" placeholder="Enter Your message here" id="puttext">
+			<button id="textButton">SEND</button>
+			<input type="file" id="fileinput" style="height:0;overflow:hidden;"><br><br>
+			<button id="addImage">Upload image</button>
+			<div id="log"></div>
+		</body>
+	</html>
+	<script type="text/javascript">
+		var username = prompt("Please enter your Username");
+		var sock = new WebSocket("ws://localhost:8080");
+		var log = document.getElementById('log');
+		function enterKeyPressed(evt) {
+			evt = evt || window.event;
+			if (evt.keyCode == 13) {
+				document.getElementById('puttext').value += '/';
+			}
+		}
+		sock.onopen = function()
+		{
+			sock.send(JSON.stringify({
+				type: "username",
+				data: username
+			}));
+		}
+		sock.onmessage = function()
+		{
+			log.innerHTML+="<br>";
+			var json = JSON.parse(event.data);
+			if(json.type == "errormsg" && json.data == "DUPLICATE-CLIENT")
+			{
+				alert(username+" is already Taken! Please try another name");
+				return;
+			}
+			if(json.type == "username")
+			{
+				if(json.data != username)
+				{
+					log.innerHTML += json.data+" joined the chat<br>";
+				}
+			}
+			else if(json.type =="text")
+			{
+				log.innerHTML += json.data+"<br>";
+			}
+			else
+			{
+				var img=json.data;
+				$("#log").append(img);
+				$("#log").append("<br>");
+			}
+		}
+		document.getElementById("textButton").onclick=function()
+		{
+			var Text = document.getElementById('puttext').value;
+			if(Text=="")
+			{
+				alert("Please Enter The Text :)");
+				return;
+			}
+			var newText = username+": ";
+			for(var i=0;i<Text.length;i++) {
+				if(Text.charAt(i) == '/') {
+					newText += '<br>';
+				} else {
+					newText += Text.charAt(i);
+				}
+			}
+			sock.send(JSON.stringify({
+				type: "text",
+				data: newText,
+			}));
+		}
+		/*function ArrayBufferToBinary(buffer)
+		{
+			var uint8 = new Uint8Array(buffer);
+			return uint8.reduce((binary, uint8) => binary + uint8.toString(2), "");
+		}
+		function ReadFile()
+		{
+			var input = document.getElementsByTagName("input")[1];
+			if(input.files.length === 0)
+			{
+				window.setTimeout(ReadFile, 1000);
+				return;
+			}
+			var fr = new FileReader();
+			fr.onload = function()
+			{
+				var data = fr.result;
+				var array = ArrayBufferToBinary(data);
+				sock.send(JSON.stringify({
+				type: "binary",
+				data: array,
+			}));
+			};
+			fr.readAsArrayBuffer(input.files[0]);
+		}*/
+		$(document).ready(function()
+		{
+			$("#addImage").click(function()
+			{
+				$("#fileinput").click();
+			});
+			$("#fileinput").change(function()
+			{
+				if (this.files && this.files[0])
+				{
+					var reader = new FileReader();
+					reader.onload = imageIsLoaded;
+					reader.readAsDataURL(this.files[0]);
+				}
+			});
+			function imageIsLoaded(e)
+			{
+				var x = 'foo';
+				var picture = '<img src="' + e.target.result + '" style="width:200px;height:200px;" class="' + x + 'thImage">'
+				sock.send(JSON.stringify({
+				type: "text",
+				data: username+ ':',
+				}));
+				sock.send(JSON.stringify({
+				type: "binary",
+				data: picture,
+				}));
+			}
+		});
+
+	</script>
